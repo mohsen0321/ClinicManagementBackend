@@ -18,7 +18,6 @@ namespace clinicsystembackend.Controllers
             _context = context;
         }
 
-        // 1. جلب كل العيادات (متاح للجميع)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -39,7 +38,6 @@ namespace clinicsystembackend.Controllers
             return Ok(clinics);
         }
 
-        // 2. جلب عيادة محددة مع قائمة الأطباء التابعين لها
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -77,7 +75,6 @@ namespace clinicsystembackend.Controllers
             return Ok(result);
         }
 
-        // 3. إضافة عيادة جديدة (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ClinicCreateUpdateDto dto)
@@ -101,7 +98,6 @@ namespace clinicsystembackend.Controllers
             return StatusCode(StatusCodes.Status201Created, clinic);
         }
 
-        // 4. تعديل عيادة (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ClinicCreateUpdateDto dto)
@@ -124,7 +120,6 @@ namespace clinicsystembackend.Controllers
             return Ok(new { message = "تم تعديل بيانات العيادة بنجاح" });
         }
 
-        // 5. تعطيل أو تفعيل عيادة (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPatch("{id}/toggle-status")]
         public async Task<IActionResult> ToggleStatus(int id)

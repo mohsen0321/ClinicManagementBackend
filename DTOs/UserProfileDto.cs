@@ -2,7 +2,7 @@
 
 namespace clinicsystembackend.DTOs
 {
-    // البيانات التي يستطيع المريض أو الأدمن تعديلها في ملفه الشخصي
+
     public class UpdateProfileDto
     {
         [Required(ErrorMessage = "الاسم الأول مطلوب"), MaxLength(50)]
@@ -17,16 +17,15 @@ namespace clinicsystembackend.DTOs
         [Required(ErrorMessage = "رقم الهاتف مطلوب"), Phone]
         public string PhoneNumber { get; set; } = string.Empty;
 
-        // أضفنا هذا السطر لاستقبال رابط الصورة المرفوعة
+
         public string? ProfilePictureUrl { get; set; }
 
-        // حقول خاصة بالمريض
+ 
         public DateTime? DateOfBirth { get; set; }
         public string? Gender { get; set; }
         public string? Address { get; set; }
     }
 
-    // كلاس لتغيير كلمة المرور
     public class ChangePasswordDto
     {
         [Required(ErrorMessage = "كلمة المرور الحالية مطلوبة")]

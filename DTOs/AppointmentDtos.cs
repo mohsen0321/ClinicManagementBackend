@@ -9,16 +9,16 @@ namespace clinicsystembackend.DTOs
         public int DoctorId { get; set; }
 
         [Required]
-        public DateTime AppointmentDate { get; set; } // التاريخ المختار
+        public DateTime AppointmentDate { get; set; } 
 
         [Required]
-        public TimeSpan TimeSlot { get; set; } // الساعة المختارة، مثل: 10:30:00
+        public TimeSpan TimeSlot { get; set; }
 
         [MaxLength(500)]
-        public string? Notes { get; set; } // ملاحظات أو شكوى المريض
+        public string? Notes { get; set; }
     }
 
-    // تعديل موعد الحجز
+  
     public class RescheduleAppointmentDto
     {
         [Required]
@@ -28,14 +28,13 @@ namespace clinicsystembackend.DTOs
         public TimeSpan NewTimeSlot { get; set; }
     }
 
-    // رفض الحجز من قِبل الإدارة
+  
     public class RejectAppointmentDto
     {
         [Required(ErrorMessage = "يرجى توضيح سبب الرفض"), MaxLength(500)]
         public string RejectionReason { get; set; } = string.Empty;
     }
 
-    // عرض تفاصيل الحجز للمريض وللأدمن
     public class AppointmentDetailDto
     {
         public int Id { get; set; }
@@ -53,7 +52,7 @@ namespace clinicsystembackend.DTOs
 
         public DateTime AppointmentDate { get; set; }
         public TimeSpan TimeSlot { get; set; }
-        public string Status { get; set; } = string.Empty; // Pending, Accepted, Rejected, Cancelled, Completed
+        public string Status { get; set; } = string.Empty; 
         public string? RejectionReason { get; set; }
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }

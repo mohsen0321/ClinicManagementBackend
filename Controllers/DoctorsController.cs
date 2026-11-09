@@ -18,26 +18,19 @@ namespace clinicsystembackend.Controllers
             _context = context;
         }
 
-        // 1. البحث والتصفية وعرض الأطباء (متاح للجميع)
-        // أمثلة:
-        // /api/doctors
-        // /api/doctors?specialtyId=1
-        // /api/doctors?clinicId=1
-        // /api/doctors?search=محمد
+      
         [HttpGet]
         public async Task<IActionResult> GetAll(
             [FromQuery] string? search,
             [FromQuery] int? specialtyId,
             [FromQuery] int? clinicId)
         {
-            // بناء استعلام LINQ ديناميكي
             var query = _context.Doctors
                 .Include(d => d.User)
                 .Include(d => d.Specialty)
                 .Include(d => d.Clinic)
                 .AsQueryable();
 
-            // تصفية حسب اسم الطبيب
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var searchLower = search.Trim().ToLower();
@@ -46,13 +39,11 @@ namespace clinicsystembackend.Controllers
                     d.User.LastName.ToLower().Contains(searchLower));
             }
 
-            // تصفية حسب التخصص
             if (specialtyId.HasValue && specialtyId.Value > 0)
             {
                 query = query.Where(d => d.SpecialtyId == specialtyId.Value);
             }
 
-            // تصفية حسب العيادة
             if (clinicId.HasValue && clinicId.Value > 0)
             {
                 query = query.Where(d => d.ClinicId == clinicId.Value);
@@ -79,7 +70,6 @@ namespace clinicsystembackend.Controllers
             return Ok(doctors);
         }
 
-        // 2. جلب تفاصيل طبيب مع ساعات عمله الكاملة
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -121,7 +111,6 @@ namespace clinicsystembackend.Controllers
             return Ok(result);
         }
 
-        // 3. إضافة طبيب جديد مع حسابه ومواعيده (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] DoctorCreateDto dto)
@@ -129,21 +118,18 @@ namespace clinicsystembackend.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // التحقق من عدم تكرار البريد ورقم الهاتف
             if (await _context.Users.AnyAsync(u => u.Email.ToLower() == dto.Email.Trim().ToLower()))
                 return Conflict(new { message = "البريد الإلكتروني مسجل بالفعل" });
 
             if (await _context.Users.AnyAsync(u => u.PhoneNumber == dto.PhoneNumber.Trim()))
                 return Conflict(new { message = "رقم الهاتف مسجل بالفعل" });
 
-            // التحقق من وجود التخصص والعيادة
             if (!await _context.Specialties.AnyAsync(s => s.Id == dto.SpecialtyId))
                 return BadRequest(new { message = "التخصص المحدد غير موجود" });
 
             if (!await _context.Clinics.AnyAsync(c => c.Id == dto.ClinicId))
                 return BadRequest(new { message = "العيادة المحددة غير موجودة" });
 
-            // 1. إنشاء حساب المستخدم كـ Admin (طبيب مسؤول)
             var user = new User
             {
                 FirstName = dto.FirstName.Trim(),
@@ -160,7 +146,6 @@ namespace clinicsystembackend.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // 2. إنشاء سجل الطبيب
             var doctor = new Doctor
             {
                 Id = user.Id,
@@ -170,7 +155,6 @@ namespace clinicsystembackend.Controllers
                 AppointmentDurationMinutes = dto.AppointmentDurationMinutes > 0 ? dto.AppointmentDurationMinutes : 30
             };
 
-            // 3. إضافة ساعات العمل إن وجدت
             if (dto.WorkingHours != null && dto.WorkingHours.Any())
             {
                 foreach (var wh in dto.WorkingHours)
@@ -191,7 +175,6 @@ namespace clinicsystembackend.Controllers
             return StatusCode(StatusCodes.Status201Created, new { message = "تم إنشاء حساب الطبيب بنجاح", doctorId = doctor.Id });
         }
 
-        // 4. تعديل بيانات الطبيب وساعات عمله (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] DoctorUpdateDto dto)
@@ -207,7 +190,6 @@ namespace clinicsystembackend.Controllers
             if (doctor == null)
                 return NotFound(new { message = "الطبيب غير موجود" });
 
-            // فحص تكرار الإيميل ورقم الهاتف لمستخدم آخر
             bool emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == dto.Email.Trim().ToLower() && u.Id != doctor.Id);
             if (emailExists)
                 return Conflict(new { message = "البريد الإلكتروني مسجل لمستخدم آخر" });
@@ -216,7 +198,6 @@ namespace clinicsystembackend.Controllers
             if (phoneExists)
                 return Conflict(new { message = "رقم الهاتف مسجل لمستخدم آخر" });
 
-            // تحديث بيانات المستخدم
             doctor.User.FirstName = dto.FirstName.Trim();
             doctor.User.LastName = dto.LastName.Trim();
             doctor.User.Email = dto.Email.Trim().ToLower();
@@ -224,13 +205,11 @@ namespace clinicsystembackend.Controllers
             doctor.User.ProfilePictureUrl = dto.ProfilePictureUrl;
             doctor.User.IsActive = dto.IsActive;
 
-            // تحديث بيانات الطبيب
             doctor.Biography = dto.Biography?.Trim();
             doctor.SpecialtyId = dto.SpecialtyId;
             doctor.ClinicId = dto.ClinicId;
             doctor.AppointmentDurationMinutes = dto.AppointmentDurationMinutes;
 
-            // تحديث ساعات العمل: نحذف القديمة ونضيف الجديدة
             _context.DoctorWorkingHours.RemoveRange(doctor.WorkingHours);
             if (dto.WorkingHours != null)
             {
@@ -251,7 +230,6 @@ namespace clinicsystembackend.Controllers
             return Ok(new { message = "تم تحديث بيانات الطبيب ومواعيده بنجاح" });
         }
 
-        // 5. تفعيل أو تعطيل حساب الطبيب (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPatch("{id}/toggle-status")]
         public async Task<IActionResult> ToggleStatus(int id)

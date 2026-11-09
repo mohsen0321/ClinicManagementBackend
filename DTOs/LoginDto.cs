@@ -2,7 +2,6 @@
 
 namespace clinicsystembackend.DTOs
 {
-    // تسجيل الدخول: المريض أو الطبيب يمكنه إدخال البريد الإلكتروني أو رقم الهاتف
     public class LoginDto
     {
         [Required(ErrorMessage = "البريد الإلكتروني أو رقم الهاتف مطلوب")]

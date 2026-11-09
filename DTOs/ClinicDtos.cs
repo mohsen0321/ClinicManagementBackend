@@ -2,7 +2,6 @@
 
 namespace clinicsystembackend.DTOs
 {
-    // لإضافة أو تعديل عيادة
     public class ClinicCreateUpdateDto
     {
         [Required(ErrorMessage = "اسم العيادة مطلوب"), MaxLength(150)]
@@ -21,7 +20,7 @@ namespace clinicsystembackend.DTOs
         public bool IsActive { get; set; } = true;
     }
 
-    // لعرض العيادة
+
     public class ClinicDto
     {
         public int Id { get; set; }

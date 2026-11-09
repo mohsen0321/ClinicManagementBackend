@@ -14,14 +14,12 @@ namespace clinicsystembackend.Services
 
         public async Task SendOtpEmailAsync(string toEmail, string otpCode, string userName)
         {
-            // قراءة إعدادات SMTP من appsettings.json
             var smtpSettings = _configuration.GetSection("SmtpSettings");
             var host = smtpSettings["Host"];
             var port = smtpSettings["Port"];
             var senderEmail = smtpSettings["SenderEmail"];
             var senderPassword = smtpSettings["SenderPassword"];
 
-            // طباعة تنبيه في الكونسول أيضاً
             Console.WriteLine($"[EMAIL] محاولة إرسال الرمز {otpCode} إلى {toEmail}");
 
             if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(senderEmail) || string.IsNullOrEmpty(senderPassword))

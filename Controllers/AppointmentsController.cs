@@ -19,25 +19,20 @@ namespace clinicsystembackend.Controllers
             _context = context;
         }
 
-        // دالة مساعدة لاستخراج معرف المستخدم من الـ JWT Token
         private int GetCurrentUserId()
         {
             var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return int.TryParse(claim, out int id) ? id : 0;
         }
 
-        // دالة مساعدة لمعرفة هل المستخدم الحالي Admin أم لا
         private bool IsAdmin()
         {
             return User.IsInRole("Admin");
         }
 
-        // 1. حساب وتوليد الفترات المتاحة للطبيب في يوم محدد
-        // GET: /api/appointments/available-slots?doctorId=1&date=2026-11-10
         [HttpGet("available-slots")]
         public async Task<IActionResult> GetAvailableSlots([FromQuery] int doctorId, [FromQuery] DateTime date)
         {
-            // منع طلب مواعيد في تاريخ ماضي
             var requestedDate = date.Date;
             if (requestedDate < DateTime.UtcNow.Date)
             {
@@ -51,20 +46,16 @@ namespace clinicsystembackend.Controllers
             if (doctor == null)
                 return NotFound(new { message = "الطبيب غير موجود" });
 
-            // تحديد يوم الأسبوع للتاريخ المطلوب
             var dayOfWeek = requestedDate.DayOfWeek;
 
-            // البحث عن جدول مواعيد الطبيب في هذا اليوم
             var workingHour = doctor.WorkingHours
                 .FirstOrDefault(w => w.DayOfWeek == dayOfWeek && w.IsAvailable);
 
             if (workingHour == null)
             {
-                // الطبيب لا يعمل في هذا اليوم
                 return Ok(new List<string>());
             }
 
-            // تقسيم ساعات العمل إلى فترات زمنية متساوية بناءً على AppointmentDurationMinutes
             var duration = TimeSpan.FromMinutes(doctor.AppointmentDurationMinutes > 0 ? doctor.AppointmentDurationMinutes : 30);
             var allSlots = new List<TimeSpan>();
             var currentSlot = workingHour.StartTime;
@@ -75,7 +66,6 @@ namespace clinicsystembackend.Controllers
                 currentSlot = currentSlot.Add(duration);
             }
 
-            // جلب الحجوزات الموجودة بالفعل لهذا الطبيب في هذا اليوم والتي لم تُلغَ أو تُرفض
             var bookedSlots = await _context.Appointments
                 .Where(a => a.DoctorId == doctorId &&
                             a.AppointmentDate.Date == requestedDate &&
@@ -84,7 +74,6 @@ namespace clinicsystembackend.Controllers
                 .Select(a => a.TimeSlot)
                 .ToListAsync();
 
-            // استبعاد الفترات المحجوزة
             var availableSlots = allSlots
                 .Where(slot => !bookedSlots.Contains(slot))
                 .Select(slot => slot.ToString(@"hh\:mm"))
@@ -93,7 +82,6 @@ namespace clinicsystembackend.Controllers
             return Ok(availableSlots);
         }
 
-        // 2. حجز موعد جديد (خاص بالمريض)
         [Authorize(Roles = "Patient")]
         [HttpPost("book")]
         public async Task<IActionResult> BookAppointment([FromBody] BookAppointmentDto dto)
@@ -104,11 +92,9 @@ namespace clinicsystembackend.Controllers
             var patientId = GetCurrentUserId();
             var bookingDate = dto.AppointmentDate.Date;
 
-            // أ. التأكد من أن التاريخ ليس في الماضي
             if (bookingDate < DateTime.UtcNow.Date)
                 return BadRequest(new { message = "لا يمكن الحجز في تاريخ سابق" });
 
-            // ب. التأكد من وجود الطبيب وأن حسابه مفعل
             var doctor = await _context.Doctors
                 .Include(d => d.User)
                 .Include(d => d.WorkingHours)
@@ -117,7 +103,6 @@ namespace clinicsystembackend.Controllers
             if (doctor == null || !doctor.User.IsActive)
                 return BadRequest(new { message = "الطبيب المحدد غير متاح حالياً" });
 
-            // ج. التأكد من أن الطبيب يعمل في هذا اليوم والوقت
             var dayOfWeek = bookingDate.DayOfWeek;
             var workingHour = doctor.WorkingHours
                 .FirstOrDefault(w => w.DayOfWeek == dayOfWeek && w.IsAvailable);
@@ -125,7 +110,6 @@ namespace clinicsystembackend.Controllers
             if (workingHour == null || dto.TimeSlot < workingHour.StartTime || dto.TimeSlot >= workingHour.EndTime)
                 return BadRequest(new { message = "هذا الوقت يقع خارج ساعات عمل الطبيب" });
 
-            // د. منع التكرار وتضارب المواعيد (Double-booking Prevention)
             bool isAlreadyBooked = await _context.Appointments.AnyAsync(a =>
                 a.DoctorId == dto.DoctorId &&
                 a.AppointmentDate.Date == bookingDate &&
@@ -136,7 +120,6 @@ namespace clinicsystembackend.Controllers
             if (isAlreadyBooked)
                 return Conflict(new { message = "عذراً، هذا الموعد تم حجزه للتو من قِبل مريض آخر. يرجى اختيار موعد آخر." });
 
-            // هـ. منع المريض نفسه من حجز موعدين لنفسه في نفس الوقت مع أطباء مختلفين
             bool patientHasConflict = await _context.Appointments.AnyAsync(a =>
                 a.PatientId == patientId &&
                 a.AppointmentDate.Date == bookingDate &&
@@ -147,7 +130,6 @@ namespace clinicsystembackend.Controllers
             if (patientHasConflict)
                 return Conflict(new { message = "لديك حجز آخر مسجل بالفعل في نفس هذا التوقيت" });
 
-            // إنشاء الحجز بحالة معلقة Pending
             var appointment = new Appointment
             {
                 PatientId = patientId,
@@ -165,7 +147,6 @@ namespace clinicsystembackend.Controllers
             return StatusCode(StatusCodes.Status201Created, new { message = "تم تقديم طلب الحجز بنجاح وهو قيد مراجعة العيادة", appointmentId = appointment.Id });
         }
 
-        // 3. عرض حجوزات المريض الحالي
         [Authorize(Roles = "Patient")]
         [HttpGet("my-appointments")]
         public async Task<IActionResult> GetMyAppointments()
@@ -201,7 +182,6 @@ namespace clinicsystembackend.Controllers
             return Ok(appointments);
         }
 
-        // 4. تفاصيل حجز معين (للمريض صاحب الحجز أو للأدمن)
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -219,7 +199,6 @@ namespace clinicsystembackend.Controllers
             if (a == null)
                 return NotFound(new { message = "الحجز غير موجود" });
 
-            // حماية أمنية: لا يمكن للمريض رؤية حجز مريض آخر
             if (!isAdmin && a.PatientId != currentUserId)
                 return Forbid();
 
@@ -247,7 +226,6 @@ namespace clinicsystembackend.Controllers
             return Ok(dto);
         }
 
-        // 5. إلغاء الحجز (بواسطة المريض صاحب الحجز أو الأدمن)
         [Authorize]
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> CancelAppointment(int id)
@@ -271,7 +249,6 @@ namespace clinicsystembackend.Controllers
             return Ok(new { message = "تم إلغاء الحجز بنجاح" });
         }
 
-        // 6. تعديل موعد الحجز (Reschedule)
         [Authorize]
         [HttpPut("{id}/reschedule")]
         public async Task<IActionResult> RescheduleAppointment(int id, [FromBody] RescheduleAppointmentDto dto)
@@ -290,7 +267,6 @@ namespace clinicsystembackend.Controllers
             if (newDate < DateTime.UtcNow.Date)
                 return BadRequest(new { message = "لا يمكن تعديل الحجز لتاريخ سابق" });
 
-            // التحقق من توافر الموعد الجديد
             bool isSlotTaken = await _context.Appointments.AnyAsync(a =>
                 a.Id != id &&
                 a.DoctorId == appointment.DoctorId &&
@@ -304,18 +280,14 @@ namespace clinicsystembackend.Controllers
 
             appointment.AppointmentDate = newDate;
             appointment.TimeSlot = dto.NewTimeSlot;
-            appointment.Status = "Pending"; // يعود معلقاً حتى يؤكده الأدمن
+            appointment.Status = "Pending"; 
             appointment.RejectionReason = null;
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "تم تعديل الموعد بنجاح وهو بانتظار التأكيد" });
         }
 
-        // ==========================================
-        // إجراءات الأدمن الخاصة بإدارة الحجوزات
-        // ==========================================
-
-        // 7. جلب جميع الحجوزات مع الفلترة الشاملة (أدمن فقط)
+        
         [Authorize(Roles = "Admin")]
         [HttpGet("admin-all")]
         public async Task<IActionResult> GetAllForAdmin(
@@ -383,7 +355,6 @@ namespace clinicsystembackend.Controllers
             return Ok(appointments);
         }
 
-        // 8. قبول الحجز (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/accept")]
         public async Task<IActionResult> AcceptAppointment(int id)
@@ -399,7 +370,6 @@ namespace clinicsystembackend.Controllers
             return Ok(new { message = "تم قبول الحجز وتأكيده بنجاح" });
         }
 
-        // 9. رفض الحجز مع ذكر السبب (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/reject")]
         public async Task<IActionResult> RejectAppointment(int id, [FromBody] RejectAppointmentDto dto)
@@ -418,7 +388,6 @@ namespace clinicsystembackend.Controllers
             return Ok(new { message = "تم رفض الحجز وتسجيل سبب الرفض" });
         }
 
-        // 10. إكمال الحجز بعد الزيارة (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/complete")]
         public async Task<IActionResult> CompleteAppointment(int id)
@@ -433,7 +402,6 @@ namespace clinicsystembackend.Controllers
             return Ok(new { message = "تمت الزيارة واكتمال الحجز بنجاح" });
         }
 
-        // 11. حذف الحجز (أدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAppointment(int id)

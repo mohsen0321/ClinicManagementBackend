@@ -19,7 +19,6 @@ namespace clinicsystembackend.Controllers
             _context = context;
         }
 
-        // 1. إحصائيات لوحة تحكم المسؤول (Admin Dashboard Overview)
         [Authorize(Roles = "Admin")]
         [HttpGet("admin-stats")]
         public async Task<IActionResult> GetAdminStats()
@@ -37,7 +36,6 @@ namespace clinicsystembackend.Controllers
                 CompletedAppointments = await _context.Appointments.CountAsync(a => a.Status == "Completed")
             };
 
-            // أحدث 5 حجوزات مسجلة
             stats.RecentAppointments = await _context.Appointments
                 .OrderByDescending(a => a.CreatedAt)
                 .Take(5)
@@ -60,7 +58,6 @@ namespace clinicsystembackend.Controllers
             return Ok(stats);
         }
 
-        // 2. إحصائيات لوحة تحكم المريض (Patient Dashboard Overview)
         [Authorize(Roles = "Patient")]
         [HttpGet("patient-stats")]
         public async Task<IActionResult> GetPatientStats()
@@ -87,7 +84,6 @@ namespace clinicsystembackend.Controllers
 
             var today = DateTime.UtcNow.Date;
 
-            // أقرب موعد قادم للمريض
             stats.UpcomingAppointment = await myAppointmentsQuery
                 .Where(a => a.AppointmentDate.Date >= today && (a.Status == "Accepted" || a.Status == "Pending"))
                 .OrderBy(a => a.AppointmentDate)
@@ -105,7 +101,6 @@ namespace clinicsystembackend.Controllers
                 })
                 .FirstOrDefaultAsync();
 
-            // آخر 5 حجوزات قام بها
             stats.RecentAppointments = await myAppointmentsQuery
                 .OrderByDescending(a => a.CreatedAt)
                 .Take(5)

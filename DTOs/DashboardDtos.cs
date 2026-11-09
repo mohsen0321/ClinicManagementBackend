@@ -1,6 +1,6 @@
 ﻿namespace clinicsystembackend.DTOs
 {
-    // إحصائيات لوحة تحكم المسؤول (Admin Dashboard)
+    
     public class AdminDashboardStatsDto
     {
         public int TotalPatients { get; set; }
@@ -15,7 +15,6 @@
         public List<AppointmentDetailDto> RecentAppointments { get; set; } = new();
     }
 
-    // إحصائيات لوحة تحكم المريض (Patient Dashboard)
     public class PatientDashboardStatsDto
     {
         public string PatientName { get; set; } = string.Empty;

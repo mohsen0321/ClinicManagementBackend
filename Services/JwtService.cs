@@ -15,7 +15,6 @@ namespace clinicsystembackend.Services
             _configuration = configuration;
         }
 
-        // دالة توليد التوكن مشفراً بالمفتاح الموجود في appsettings.json
         public (string token, DateTime expiresAt) GenerateToken(User user)
         {
             var jwtSettings = _configuration.GetSection("Jwt");
@@ -23,13 +22,13 @@ namespace clinicsystembackend.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // البيانات المحفوظة داخل التوكن (Claims)
+         
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
-                new Claim(ClaimTypes.Role, user.Role) // هذا هو الأساس في تحديد صلاحية المستخدم
+                new Claim(ClaimTypes.Role, user.Role) 
             };
 
             var durationDays = int.Parse(jwtSettings["DurationInDays"] ?? "7");

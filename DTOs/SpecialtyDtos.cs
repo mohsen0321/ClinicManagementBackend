@@ -2,7 +2,6 @@
 
 namespace clinicsystembackend.DTOs
 {
-    // لاستقبال بيانات إضافة أو تعديل تخصص
     public class SpecialtyCreateUpdateDto
     {
         [Required(ErrorMessage = "اسم التخصص مطلوب"), MaxLength(100)]
@@ -12,7 +11,6 @@ namespace clinicsystembackend.DTOs
         public string? Description { get; set; }
     }
 
-    // لعرض التخصص مع عدد الأطباء فيه
     public class SpecialtyDto
     {
         public int Id { get; set; }

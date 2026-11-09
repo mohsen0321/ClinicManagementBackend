@@ -8,7 +8,7 @@ namespace clinicsystembackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")] // متاح للأدمن فقط
+    [Authorize(Roles = "Admin")] 
     public class PatientsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -18,7 +18,6 @@ namespace clinicsystembackend.Controllers
             _context = context;
         }
 
-        // 1. عرض جميع المرضى مع إمكانية البحث بالاسم أو الهاتف أو الإيميل
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] string? search)
         {
@@ -57,7 +56,6 @@ namespace clinicsystembackend.Controllers
             return Ok(patients);
         }
 
-        // 2. عرض تفاصيل مريض محدد مع سجل جميع حجوزاته السابقة
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -105,7 +103,6 @@ namespace clinicsystembackend.Controllers
             return Ok(result);
         }
 
-        // 3. تعطيل أو تفعيل حساب المريض
         [HttpPatch("{id}/toggle-status")]
         public async Task<IActionResult> ToggleStatus(int id)
         {

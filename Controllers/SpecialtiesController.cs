@@ -18,11 +18,9 @@ namespace clinicsystembackend.Controllers
             _context = context;
         }
 
-        // 1. جلب جميع التخصصات (متاح للجميع: مريض وزائر وأدمن)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            // استعلام LINQ: تحويل كل Specialty إلى SpecialtyDto وحساب عدد أطبائها
             var specialties = await _context.Specialties
                 .Select(s => new SpecialtyDto
                 {
@@ -36,7 +34,6 @@ namespace clinicsystembackend.Controllers
             return Ok(specialties);
         }
 
-        // 2. جلب تخصص محدد بواسطة الـ Id
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -57,7 +54,6 @@ namespace clinicsystembackend.Controllers
             });
         }
 
-        // 3. إضافة تخصص جديد (خاص بالأدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] SpecialtyCreateUpdateDto dto)
@@ -81,7 +77,6 @@ namespace clinicsystembackend.Controllers
             return StatusCode(StatusCodes.Status201Created, specialty);
         }
 
-        // 4. تعديل تخصص (خاص بالأدمن فقط)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] SpecialtyCreateUpdateDto dto)
@@ -104,7 +99,6 @@ namespace clinicsystembackend.Controllers
             return Ok(new { message = "تم تعديل التخصص بنجاح" });
         }
 
-        // 5. حذف تخصص (خاص بالأدمن فقط مع حماية الارتباط)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -116,7 +110,6 @@ namespace clinicsystembackend.Controllers
             if (specialty == null)
                 return NotFound(new { message = "التخصص غير موجود" });
 
-            // قاعدة مهمة: منع الحذف إذا كان هناك أطباء ينتمون لهذا التخصص
             if (specialty.Doctors.Any())
             {
                 return BadRequest(new { message = "لا يمكن حذف هذا التخصص لأنه مرتبط بأطباء حاليين. يرجى نقل الأطباء إلى تخصص آخر أولاً." });

@@ -2,14 +2,12 @@
 
 namespace clinicsystembackend.DTOs
 {
-    // لاستقبال الإيميل لطلب كود OTP
     public class ForgotPasswordDto
     {
         [Required(ErrorMessage = "البريد الإلكتروني مطلوب"), EmailAddress(ErrorMessage = "صيغة البريد الإلكتروني غير صحيحة")]
         public string Email { get; set; } = string.Empty;
     }
 
-    // لتأكيد الـ OTP وتعيين كلمة المرور الجديدة
     public class ResetPasswordDto
     {
         [Required(ErrorMessage = "البريد الإلكتروني مطلوب"), EmailAddress]

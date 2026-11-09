@@ -2,7 +2,6 @@
 
 namespace clinicsystembackend.DTOs
 {
-    // البيانات القادمة من شاشة إنشاء حساب جديد
     public class RegisterDto
     {
         [Required(ErrorMessage = "الاسم الأول مطلوب"), MaxLength(50)]

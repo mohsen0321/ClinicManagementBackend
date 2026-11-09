@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace clinicsystembackend.Models
 {
-    // جدول العيادات والمراكز
+    
     public class Clinic
     {
         [Key]
@@ -25,7 +25,6 @@ namespace clinicsystembackend.Models
 
         public bool IsActive { get; set; } = true;
 
-        // قائمة الأطباء المتاحين في هذه العيادة
         public ICollection<Doctor> Doctors { get; set; } = new List<Doctor>();
     }
 }

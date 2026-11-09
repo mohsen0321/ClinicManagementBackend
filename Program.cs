@@ -8,14 +8,13 @@ using clinicsystembackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1.  ”ÃÌ· DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2.  ”ÃÌ· Œœ„… «·‹ JWT
+
 builder.Services.AddScoped<JwtService>();
 
-// 3. ≈⁄œ«œ «·‹ JWT Authentication
+
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
@@ -36,16 +35,16 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidateAudience = true,
         ValidAudience = jwtSettings["Audience"],
-        ClockSkew = TimeSpan.Zero // ≈·€«¡ √Ì  √ŒÌ— “„‰Ì ≈÷«›Ì ·«‰ Â«¡ «· Êﬂ‰
+        ClockSkew = TimeSpan.Zero 
     };
 });
 
-// 4. ≈⁄œ«œ «·‹ CORS ·ﬂÌ Ì „ﬂ‰ React ›Ì «·ŒÿÊ«  «··«Õﬁ… „‰ ≈—”«· Ê«” ﬁ»«· «·»Ì«‰« 
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // —«»ÿ  ‘€Ì·  ÿ»Ìﬁ React «·«› —«÷Ì
+        policy.WithOrigins("http://localhost:3000") 
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -54,7 +53,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<EmailService>();
-// 5.  Œ’Ì’ Swagger ·œ⁄„ ≈œŒ«· «·‹ Bearer Token ·· Ã—»…
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Clinic Management API", Version = "v1" });
@@ -92,13 +91,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-//  ›⁄Ì· „Ã·œ «·„·›«  «·À«» … wwwroot · Œ“Ì‰ Ê⁄—÷ «·’Ê—
+
 app.UseStaticFiles();
 
-//  ›⁄Ì· ”Ì«”… «·‹ CORS
+
 app.UseCors("AllowReactApp");
 
-//  — Ì» „Â„ Ãœ«: «·‹ Authentication √Ê·« À„ Authorization
+
 app.UseAuthentication();
 app.UseAuthorization();
 
