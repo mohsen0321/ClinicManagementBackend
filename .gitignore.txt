@@ -1,0 +1,10 @@
+# .NET Core / Visual Studio ignores
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+
+# Ignore sensitive settings files
+appsettings.*.json
+!appsettings.json
